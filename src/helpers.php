@@ -27,16 +27,15 @@ if (! function_exists('app')) {
      * Get the available container instance.
      *
      * @param  string  $make
-     * @param  array   $parameters
      * @return mixed|\Laravel\Lumen\Application
      */
-    function app($make = null, $parameters = [])
+    function app($make = null)
     {
         if (is_null($make)) {
             return Container::getInstance();
         }
 
-        return Container::getInstance()->make($make, $parameters);
+        return Container::getInstance()->make($make);
     }
 }
 
@@ -287,12 +286,13 @@ if (! function_exists('route')) {
      *
      * @param  string  $name
      * @param  array   $parameters
+     * @param  bool    $secure
      * @return string
      */
-    function route($name, $parameters = [])
+    function route($name, $parameters = [], $secure = null)
     {
         return (new Laravel\Lumen\Routing\UrlGenerator(app()))
-                ->route($name, $parameters);
+                ->route($name, $parameters, $secure);
     }
 }
 

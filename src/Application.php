@@ -112,7 +112,7 @@ class Application extends Container
      */
     public function version()
     {
-        return 'Lumen (5.3.3) (Laravel Components 5.3.*)';
+        return 'Lumen (5.4.0-Dev) (Laravel Components 5.4.*)';
     }
 
     /**
@@ -154,11 +154,9 @@ class Application extends Container
      * Register a service provider with the application.
      *
      * @param  \Illuminate\Support\ServiceProvider|string  $provider
-     * @param  array  $options
-     * @param  bool   $force
      * @return \Illuminate\Support\ServiceProvider
      */
-    public function register($provider, $options = [], $force = false)
+    public function register($provider)
     {
         if (! $provider instanceof ServiceProvider) {
             $provider = new $provider($this);
@@ -183,10 +181,9 @@ class Application extends Container
      * Register a deferred provider and service.
      *
      * @param  string  $provider
-     * @param  string|null  $service
      * @return void
      */
-    public function registerDeferredProvider($provider, $service = null)
+    public function registerDeferredProvider($provider)
     {
         return $this->register($provider);
     }
@@ -195,12 +192,11 @@ class Application extends Container
      * Resolve the given type from the container.
      *
      * @param  string  $abstract
-     * @param  array   $parameters
      * @return mixed
      */
-    public function make($abstract, array $parameters = [])
+    public function make($abstract)
     {
-        $abstract = $this->getAlias($this->normalize($abstract));
+        $abstract = $this->getAlias($abstract);
 
         if (array_key_exists($abstract, $this->availableBindings) &&
             ! array_key_exists($this->availableBindings[$abstract], $this->ranServiceBinders)) {
@@ -209,7 +205,7 @@ class Application extends Container
             $this->ranServiceBinders[$method] = true;
         }
 
-        return parent::make($abstract, $parameters);
+        return parent::make($abstract);
     }
 
     /**
@@ -777,8 +773,7 @@ class Application extends Container
         $this->configure('database');
 
         $this->register('Illuminate\Database\MigrationServiceProvider');
-        $this->register('Illuminate\Database\SeedServiceProvider');
-        $this->register('Illuminate\Queue\ConsoleServiceProvider');
+        $this->register('Laravel\Lumen\Console\ConsoleServiceProvider');
     }
 
     /**
@@ -846,6 +841,7 @@ class Application extends Container
     public $availableBindings = [
         'auth' => 'registerAuthBindings',
         'auth.driver' => 'registerAuthBindings',
+        'Illuminate\Auth\AuthManager' => 'registerAuthBindings',
         'Illuminate\Contracts\Auth\Guard' => 'registerAuthBindings',
         'Illuminate\Contracts\Auth\Access\Gate' => 'registerAuthBindings',
         'Illuminate\Contracts\Broadcasting\Broadcaster' => 'registerBroadcastingBindings',

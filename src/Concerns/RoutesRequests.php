@@ -13,7 +13,6 @@ use Illuminate\Http\Response;
 use Laravel\Lumen\Routing\Pipeline;
 use Illuminate\Http\Exception\HttpResponseException;
 use Laravel\Lumen\Routing\Closure as RoutingClosure;
-use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Laravel\Lumen\Routing\Controller as LumenController;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Psr\Http\Message\ResponseInterface as PsrResponseInterface;
@@ -158,7 +157,7 @@ trait RoutesRequests
     protected static function formatUsesPrefix($new, $old)
     {
         if (isset($new['namespace'])) {
-            return isset($old['namespace'])
+            return isset($old['namespace']) && strpos($new['namespace'], '\\') !== 0
                 ? trim($old['namespace'], '\\').'\\'.trim($new['namespace'], '\\')
                 : trim($new['namespace'], '\\');
         }
@@ -454,7 +453,7 @@ trait RoutesRequests
     /**
      * {@inheritdoc}
      */
-    public function handle(SymfonyRequest $request, $type = HttpKernelInterface::MASTER_REQUEST, $catch = true)
+    public function handle(SymfonyRequest $request)
     {
         $response = $this->dispatch($request);
 
