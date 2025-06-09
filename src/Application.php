@@ -131,12 +131,14 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
     /**
      * Create a new Lumen application instance.
      *
+     * @param  string|null  $basePath
      * @return void
      */
-    public function __construct()
+    public function __construct($basePath = null)
     {
         date_default_timezone_set(env('APP_TIMEZONE', 'UTC'));
 
+        $this->basePath = $basePath;
         $this->bootstrapContainer();
         $this->registerErrorHandling();
     }
@@ -162,7 +164,7 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
      */
     public function version()
     {
-        return 'Lumen (5.0.3) (Laravel Components 5.0.*)';
+        return 'Lumen (5.0.4) (Laravel Components 5.0.*)';
     }
 
     /**
@@ -274,7 +276,9 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
         error_reporting(-1);
 
         set_error_handler(function ($level, $message, $file = '', $line = 0) {
-            throw new ErrorException($message, 0, $level, $file, $line);
+            if (error_reporting() & $level) {
+                throw new ErrorException($message, 0, $level, $file, $line);
+            }
         });
 
         set_exception_handler(function ($e) {
@@ -569,6 +573,18 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
 
         $this->singleton('queue.connection', function () {
             return $this->loadComponent('queue', 'Illuminate\Queue\QueueServiceProvider', 'queue.connection');
+        });
+    }
+
+    /**
+     * Register container bindings for the application.
+     *
+     * @return void
+     */
+    protected function registerRedisBindings()
+    {
+        $this->singleton('redis', function() {
+            return $this->loadComponent('database', 'Illuminate\Redis\RedisServiceProvider', 'redis');
         });
     }
 
@@ -1441,6 +1457,8 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
      */
     public function prepareForConsoleCommand()
     {
+        $this->withFacades();
+
         $this->make('cache');
         $this->make('queue');
 
@@ -1494,6 +1512,8 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
             'log' => 'Psr\Log\LoggerInterface',
             'Illuminate\Contracts\Mail\Mailer' => 'mailer',
             'Illuminate\Contracts\Queue\Queue' => 'queue.connection',
+            'Illuminate\Redis\Database' => 'redis',
+            'Illuminate\Contracts\Redis\Database' => 'redis',
             'request' => 'Illuminate\Http\Request',
             'Illuminate\Session\SessionManager' => 'session',
             'Illuminate\Contracts\View\Factory' => 'view',
@@ -1537,6 +1557,7 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
         'queue' => 'registerQueueBindings',
         'queue.connection' => 'registerQueueBindings',
         'Illuminate\Contracts\Queue\Queue' => 'registerQueueBindings',
+        'redis' => 'registerRedisBindings',
         'request' => 'registerRequestBindings',
         'Illuminate\Http\Request' => 'registerRequestBindings',
         'session' => 'registerSessionBindings',
