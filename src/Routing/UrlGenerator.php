@@ -28,6 +28,13 @@ class UrlGenerator
     protected $cachedRoot;
 
     /**
+     * The URL schema to be forced on all generated URLs.
+     *
+     * @var string|null
+     */
+    protected $forceSchema;
+
+    /**
      * Create a new URL redirector instance.
      *
      * @param  Application  $application
@@ -56,7 +63,7 @@ class UrlGenerator
     public function current()
     {
         return $this->to($this->app->make('request')->getPathInfo());
-    }    
+    }
 
     /**
      * Generate a url for the application
@@ -112,7 +119,9 @@ class UrlGenerator
      */
     public function asset($path, $secure = null)
     {
-        if ($this->isValidUrl($path)) return $path;
+        if ($this->isValidUrl($path)) {
+            return $path;
+        }
 
         // Once we get the root URL, we will check to see if it contains an index.php
         // file in the paths. If it does, we will remove it since it is not needed
@@ -154,9 +163,8 @@ class UrlGenerator
      */
     protected function getScheme($secure)
     {
-        if (is_null($secure))
-        {
-            return $this->forceSchema ?: $this->request->getScheme().'://';
+        if (is_null($secure)) {
+            return $this->forceSchema ?: $this->app->make('request')->getScheme().'://';
         }
 
         return $secure ? 'https://' : 'http://';

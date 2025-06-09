@@ -5,7 +5,28 @@ use PHPUnit_Framework_TestCase;
 abstract class TestCase extends PHPUnit_Framework_TestCase
 {
 
-    use ApplicationTrait, AssertionsTrait;
+    use ApplicationTrait, AssertionsTrait, CrawlerTrait;
+
+    /**
+     * The Eloquent factory instance.
+     *
+     * @var \Illuminate\Database\Eloquent\Factory
+     */
+    protected $factory;
+
+    /**
+     * The callbacks that should be run before the application is destroyed.
+     *
+     * @var array
+     */
+    protected $beforeApplicationDestroyedCallbacks = [];
+
+    /**
+     * The base URL to use while testing the application.
+     *
+     * @var string
+     */
+    protected $baseUrl = 'http://localhost';
 
     /**
      * Creates the application.
@@ -26,6 +47,12 @@ abstract class TestCase extends PHPUnit_Framework_TestCase
         if (! $this->app) {
             $this->refreshApplication();
         }
+
+        if (!$this->factory) {
+            $this->app->make('db');
+
+            $this->factory = $this->app->make('Illuminate\Database\Eloquent\Factory');
+        }
     }
 
     /**
@@ -35,8 +62,29 @@ abstract class TestCase extends PHPUnit_Framework_TestCase
      */
     public function tearDown()
     {
-        if ($this->app) {
-            $this->app->flush();
+        if (class_exists('Mockery')) {
+            Mockery::close();
         }
+
+        if ($this->app) {
+            foreach ($this->beforeApplicationDestroyedCallbacks as $callback) {
+                call_user_func($callback);
+            }
+
+            $this->app->flush();
+
+            $this->app = null;
+        }
+    }
+
+    /**
+     * Register a callback to be run before the application is destroyed.
+     *
+     * @param  callable  $callback
+     * @return void
+     */
+    protected function beforeApplicationDestroyed(callable $callback)
+    {
+        $this->beforeApplicationDestroyedCallbacks[] = $callback;
     }
 }

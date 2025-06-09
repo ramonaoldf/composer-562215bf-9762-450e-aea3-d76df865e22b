@@ -172,7 +172,7 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
      */
     public function version()
     {
-        return 'Lumen (5.0.10) (Laravel Components 5.0.*)';
+        return 'Lumen (5.1.0) (Laravel Components 5.1.*)';
     }
 
     /**
@@ -204,6 +204,26 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
     public function registerConfiguredProviders()
     {
         //
+    }
+
+    /**
+     * Get the path to the cached "compiled.php" file.
+     *
+     * @return string
+     */
+    public function getCachedCompilePath()
+    {
+        throw new Exception(__FUNCTION__.' is not implemented by Lumen.');
+    }
+
+    /**
+     * Get the path to the cached services.json file.
+     *
+     * @return string
+     */
+    public function getCachedServicesPath()
+    {
+        throw new Exception(__FUNCTION__.' is not implemented by Lumen.');
     }
 
     /**
@@ -354,7 +374,7 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
      * @param  array   $parameters
      * @return mixed
      */
-    public function make($abstract, $parameters = [])
+    public function make($abstract, array $parameters = array())
     {
         if (array_key_exists($abstract, $this->availableBindings) &&
             ! array_key_exists($this->availableBindings[$abstract], $this->ranServiceBinders)) {
@@ -383,6 +403,22 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
 
         $this->singleton('auth.password', function () {
             return $this->loadComponent('auth', 'Illuminate\Auth\Passwords\PasswordResetServiceProvider', 'auth.password');
+        });
+    }
+
+    /**
+     * Register container bindings for the application.
+     *
+     * @return void
+     */
+    protected function registerBroadcastingBindings()
+    {
+        $this->singleton('Illuminate\Contracts\Broadcasting\Broadcaster', function () {
+            $this->configure('broadcasting');
+
+            $this->register('Illuminate\Broadcasting\BroadcastServiceProvider');
+
+            return $this->make('Illuminate\Contracts\Broadcasting\Broadcaster');
         });
     }
 
@@ -595,7 +631,7 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
      */
     protected function registerRedisBindings()
     {
-        $this->singleton('redis', function() {
+        $this->singleton('redis', function () {
             return $this->loadComponent('database', 'Illuminate\Redis\RedisServiceProvider', 'redis');
         });
     }
@@ -907,19 +943,19 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
      * @param  string  $uri
      * @param  mixed  $action
      */
-    protected function addRoute($method, $uri, $action)
+    public function addRoute($method, $uri, $action)
     {
         $action = $this->parseAction($action);
 
-        $uri = $uri === '/' ? $uri : '/'.trim($uri, '/');
-
         if (isset($this->groupAttributes)) {
             if (isset($this->groupAttributes['prefix'])) {
-                $uri = rtrim('/'.trim($this->groupAttributes['prefix'], '/').$uri, '/');
+                $uri = trim($this->groupAttributes['prefix'], '/').'/'.trim($uri, '/');
             }
 
             $action = $this->mergeGroupAttributes($action);
         }
+
+        $uri = '/'.trim($uri, '/');
 
         if (isset($action['as'])) {
             $this->namedRoutes[$action['as']] = $uri;
@@ -1297,7 +1333,8 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
         $middleware = is_string($middleware) ? explode('|', $middleware) : (array) $middleware;
 
         return array_map(function ($name) {
-            return $this->routeMiddleware[$name];
+            list($name, $parameters) = array_pad(explode(':', $name, 2), 2, null);
+            return array_get($this->routeMiddleware, $name, $name).($parameters ? ':'.$parameters : '');
         }, $middleware);
     }
 
@@ -1526,6 +1563,7 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
             'Illuminate\Contracts\Auth\PasswordBroker' => 'auth.password',
             'Illuminate\Contracts\Cache\Factory' => 'cache',
             'Illuminate\Contracts\Cache\Repository' => 'cache.store',
+            'Illuminate\Contracts\Config\Repository' => 'config',
             'Illuminate\Container\Container' => 'app',
             'Illuminate\Contracts\Container\Container' => 'app',
             'Illuminate\Contracts\Cookie\Factory' => 'cookie',
@@ -1536,6 +1574,7 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
             'Illuminate\Contracts\Hashing\Hasher' => 'hash',
             'log' => 'Psr\Log\LoggerInterface',
             'Illuminate\Contracts\Mail\Mailer' => 'mailer',
+            'Illuminate\Contracts\Queue\Factory' => 'queue',
             'Illuminate\Contracts\Queue\Queue' => 'queue.connection',
             'Illuminate\Redis\Database' => 'redis',
             'Illuminate\Contracts\Redis\Database' => 'redis',
@@ -1556,6 +1595,7 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
         'Illuminate\Contracts\Auth\Guard' => 'registerAuthBindings',
         'auth.password' => 'registerAuthBindings',
         'Illuminate\Contracts\Auth\PasswordBroker' => 'registerAuthBindings',
+        'Illuminate\Contracts\Broadcasting\Broadcaster' => 'registerBroadcastingBindings',
         'Illuminate\Contracts\Bus\Dispatcher' => 'registerBusBindings',
         'cache' => 'registerCacheBindings',
         'Illuminate\Contracts\Cache\Factory' => 'registerCacheBindings',
@@ -1566,6 +1606,7 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
         'Illuminate\Contracts\Cookie\Factory' => 'registerCookieBindings',
         'Illuminate\Contracts\Cookie\QueueingFactory' => 'registerCookieBindings',
         'db' => 'registerDatabaseBindings',
+        'Illuminate\Database\Eloquent\Factory' => 'registerDatabaseBindings',
         'encrypter' => 'registerEncrypterBindings',
         'Illuminate\Contracts\Encryption\Encrypter' => 'registerEncrypterBindings',
         'events' => 'registerEventBindings',
@@ -1582,6 +1623,7 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
         'Illuminate\Contracts\Mail\Mailer' => 'registerMailBindings',
         'queue' => 'registerQueueBindings',
         'queue.connection' => 'registerQueueBindings',
+        'Illuminate\Contracts\Queue\Factory' => 'registerQueueBindings',
         'Illuminate\Contracts\Queue\Queue' => 'registerQueueBindings',
         'redis' => 'registerRedisBindings',
         'request' => 'registerRequestBindings',
