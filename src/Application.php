@@ -169,7 +169,7 @@ class Application extends Container
      */
     public function version()
     {
-        return 'Lumen (10.0.0) (Laravel Components ^10.0)';
+        return 'Lumen (10.0.1) (Laravel Components ^10.0)';
     }
 
     /**
@@ -790,7 +790,9 @@ class Application extends Container
             $merged = array_merge($defaults, $userAliases);
 
             foreach ($merged as $original => $alias) {
-                class_alias($original, $alias);
+                if (! class_exists($alias)) {
+                    class_alias($original, $alias);
+                }
             }
         }
     }
