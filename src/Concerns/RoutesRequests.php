@@ -3,9 +3,9 @@
 namespace Laravel\Lumen\Concerns;
 
 use Closure;
-use Exception;
 use Throwable;
 use FastRoute\Dispatcher;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -169,8 +169,6 @@ trait RoutesRequests
                     $this->createDispatcher()->dispatch($method, $pathInfo)
                 );
             });
-        } catch (Exception $e) {
-            return $this->prepareResponse($this->sendExceptionToHandler($e));
         } catch (Throwable $e) {
             return $this->prepareResponse($this->sendExceptionToHandler($e));
         }
@@ -395,7 +393,7 @@ trait RoutesRequests
         return array_map(function ($name) {
             list($name, $parameters) = array_pad(explode(':', $name, 2), 2, null);
 
-            return array_get($this->routeMiddleware, $name, $name).($parameters ? ':'.$parameters : '');
+            return Arr::get($this->routeMiddleware, $name, $name).($parameters ? ':'.$parameters : '');
         }, $middleware);
     }
 
