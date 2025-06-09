@@ -164,7 +164,7 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
      */
     public function version()
     {
-        return 'Lumen (5.0.7) (Laravel Components 5.0.*)';
+        return 'Lumen (5.0.8) (Laravel Components 5.0.*)';
     }
 
     /**
@@ -1066,6 +1066,9 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
     public function dispatch($request = null)
     {
         if ($request) {
+            $this->instance('Illuminate\Http\Request', $request);
+            $this->ranServiceBinders['registerRequestBindings'] = true;
+
             $method = $request->getMethod();
             $pathInfo = $request->getPathInfo();
         } else {
