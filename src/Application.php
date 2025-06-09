@@ -140,7 +140,7 @@ class Application extends Container
      */
     public function version()
     {
-        return 'Lumen (6.1.0) (Laravel Components ^6.0)';
+        return 'Lumen (6.2.0) (Laravel Components ^6.0)';
     }
 
     /**
@@ -936,6 +936,39 @@ class Application extends Container
         $this->router = null;
         $this->dispatcher = null;
         static::$instance = null;
+    }
+
+    /**
+     * Get the current application locale.
+     *
+     * @return string
+     */
+    public function getLocale()
+    {
+        return $this['config']->get('app.locale');
+    }
+
+    /**
+     * Set the current application locale.
+     *
+     * @param  string  $locale
+     * @return void
+     */
+    public function setLocale($locale)
+    {
+        $this['config']->set('app.locale', $locale);
+        $this['translator']->setLocale($locale);
+    }
+
+    /**
+     * Determine if application locale is the given locale.
+     *
+     * @param  string  $locale
+     * @return bool
+     */
+    public function isLocale($locale)
+    {
+        return $this->getLocale() == $locale;
     }
 
     /**
