@@ -19,7 +19,6 @@ use Symfony\Component\Console\Output\ConsoleOutput;
 use Illuminate\Http\Exception\HttpResponseException;
 use Illuminate\Config\Repository as ConfigRepository;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
-use Illuminate\Contracts\Routing\TerminableMiddleware;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
@@ -172,7 +171,7 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
      */
     public function version()
     {
-        return 'Lumen (5.1.0) (Laravel Components 5.1.*)';
+        return 'Lumen (5.1.1) (Laravel Components 5.1.*)';
     }
 
     /**
@@ -1096,10 +1095,8 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
         foreach ($this->middleware as $middleware) {
             $instance = $this->make($middleware);
 
-            if ($instance instanceof TerminableMiddleware) {
-                $instance->terminate(
-                    $this->make('request'), $response
-                );
+            if (method_exists($instance, 'terminate')) {
+                $instance->terminate($this->make('request'), $response);
             }
         }
     }
@@ -1204,8 +1201,9 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
             }));
         }
 
-        return is_string($response = $this->callActionOnArrayBasedRoute($routeInfo))
-                         ? $response : $this->prepareResponse($response);
+        return $this->prepareResponse(
+            $this->callActionOnArrayBasedRoute($routeInfo)
+        );
     }
 
     /**
@@ -1219,7 +1217,7 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
         $action = $routeInfo[1];
 
         if (isset($action['uses'])) {
-            return $this->callControllerAction($routeInfo);
+            return $this->prepareResponse($this->callControllerAction($routeInfo));
         }
 
         foreach ($action as $value) {
@@ -1230,7 +1228,7 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
         }
 
         try {
-            return $this->call($closure, $routeInfo[2]);
+            return $this->prepareResponse($this->call($closure, $routeInfo[2]));
         } catch (HttpResponseException $e) {
             return $e->getResponse();
         }
@@ -1412,7 +1410,7 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
             return $this->basePath.($path ? '/'.$path : $path);
         }
 
-        if ($this->runningInConsole() || php_sapi_name() === 'cli-server') {
+        if ($this->runningInConsole()) {
             $this->basePath = getcwd();
         } else {
             $this->basePath = realpath(getcwd().'/../');
