@@ -162,7 +162,7 @@ class Application extends Container
      */
     public function version()
     {
-        return 'Lumen (8.3.2) (Laravel Components ^8.0)';
+        return 'Lumen (8.3.3) (Laravel Components ^8.0)';
     }
 
     /**
@@ -1015,6 +1015,7 @@ class Application extends Container
             \Illuminate\Contracts\Cache\Factory::class => 'cache',
             \Illuminate\Contracts\Cache\Repository::class => 'cache.store',
             \Illuminate\Contracts\Config\Repository::class => 'config',
+            \Illuminate\Config\Repository::class => 'config',
             \Illuminate\Container\Container::class => 'app',
             \Illuminate\Contracts\Container\Container::class => 'app',
             \Illuminate\Database\ConnectionResolverInterface::class => 'db',
