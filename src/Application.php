@@ -169,7 +169,7 @@ class Application extends Container
      */
     public function version()
     {
-        return 'Lumen (9.1.5) (Laravel Components ^9.21)';
+        return 'Lumen (9.1.6) (Laravel Components ^9.36.3)';
     }
 
     /**
@@ -205,6 +205,26 @@ class Application extends Container
         }
 
         return $env;
+    }
+
+    /**
+     * Determine if the application is in the local environment.
+     *
+     * @return bool
+     */
+    public function isLocal()
+    {
+        return $this->environment() === 'local';
+    }
+
+    /**
+     * Determine if the application is in the production environment.
+     *
+     * @return bool
+     */
+    public function isProduction()
+    {
+        return $this->environment() === 'production';
     }
 
     /**
@@ -913,7 +933,7 @@ class Application extends Container
      */
     public function runningUnitTests()
     {
-        return $this->environment() == 'testing';
+        return $this->environment() === 'testing';
     }
 
     /**
