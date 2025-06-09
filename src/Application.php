@@ -364,6 +364,8 @@ class Application extends Container
     protected function registerDatabaseBindings()
     {
         $this->singleton('db', function () {
+            $this->configure('app');
+
             return $this->loadComponent(
                 'database', [
                     'Illuminate\Database\DatabaseServiceProvider',
@@ -672,7 +674,7 @@ class Application extends Container
      * Register the facades for the application.
      *
      * @param  bool  $aliases
-     * @param  array $userAliases
+     * @param  array  $userAliases
      * @return void
      */
     public function withFacades($aliases = true, $userAliases = [])
@@ -855,7 +857,7 @@ class Application extends Container
      */
     public function runningInConsole()
     {
-        return php_sapi_name() === 'cli' || php_sapi_name() === 'phpdbg';
+        return \PHP_SAPI === 'cli' || \PHP_SAPI === 'phpdbg';
     }
 
     /**
