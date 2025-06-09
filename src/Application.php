@@ -2,7 +2,6 @@
 
 namespace Laravel\Lumen;
 
-use Exception;
 use Illuminate\Config\Repository as ConfigRepository;
 use Illuminate\Container\Container;
 use Illuminate\Filesystem\Filesystem;
@@ -14,15 +13,12 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Laravel\Lumen\Routing\Router;
 use Nyholm\Psr7\Factory\Psr17Factory;
-use Nyholm\Psr7\Response as NyholmPsrResponse;
+use Nyholm\Psr7\Response as PsrResponse;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
-use Symfony\Bridge\PsrHttpMessage\Factory\DiactorosFactory;
 use Symfony\Bridge\PsrHttpMessage\Factory\PsrHttpFactory;
 use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
-use Zend\Diactoros\Response as ZendPsrResponse;
-use Zend\Diactoros\ServerRequestFactory;
 
 class Application extends Container
 {
@@ -100,10 +96,6 @@ class Application extends Container
      */
     public function __construct($basePath = null)
     {
-        if (! empty(env('APP_TIMEZONE'))) {
-            date_default_timezone_set(env('APP_TIMEZONE', 'UTC'));
-        }
-
         $this->basePath = $basePath;
 
         $this->bootstrapContainer();
@@ -147,7 +139,7 @@ class Application extends Container
      */
     public function version()
     {
-        return 'Lumen (6.3.3) (Laravel Components ^6.0)';
+        return 'Lumen (7.0.0) (Laravel Components ^7.0)';
     }
 
     /**
@@ -529,10 +521,6 @@ class Application extends Container
                     ->createRequest($app->make('request'));
             }
 
-            if (class_exists(ServerRequestFactory::class) && class_exists(DiactorosFactory::class)) {
-                return (new DiactorosFactory)->createRequest($app->make('request'));
-            }
-
             throw new Exception('Unable to resolve PSR request. Please install symfony/psr-http-message-bridge and nyholm/psr7.');
         });
     }
@@ -545,12 +533,8 @@ class Application extends Container
     protected function registerPsrResponseBindings()
     {
         $this->singleton(ResponseInterface::class, function () {
-            if (class_exists(NyholmPsrResponse::class)) {
-                return new NyholmPsrResponse;
-            }
-
-            if (class_exists(ZendPsrResponse::class)) {
-                return new ZendPsrResponse;
+            if (class_exists(PsrResponse::class)) {
+                return new PsrResponse;
             }
 
             throw new Exception('Unable to resolve PSR response. Please install nyholm/psr7.');
@@ -844,26 +828,6 @@ class Application extends Container
     public function resourcePath($path = '')
     {
         return $this->basePath.DIRECTORY_SEPARATOR.'resources'.($path ? DIRECTORY_SEPARATOR.$path : $path);
-    }
-
-    /**
-     * Determine if the application routes are cached.
-     *
-     * @return bool
-     */
-    public function routesAreCached()
-    {
-        return false;
-    }
-
-    /**
-     * Determine if the application configuration is cached.
-     *
-     * @return bool
-     */
-    public function configurationIsCached()
-    {
-        return false;
     }
 
     /**
