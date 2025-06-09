@@ -2,11 +2,11 @@
 
 namespace Laravel\Lumen\Testing\Concerns;
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
-use Illuminate\Http\Request;
-use PHPUnit\Framework\Assert as PHPUnit;
 use Laravel\Lumen\Http\Request as LumenRequest;
+use PHPUnit\Framework\Assert as PHPUnit;
 use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
 
 trait MakesHttpRequests
@@ -136,18 +136,18 @@ trait MakesHttpRequests
     }
 
     /**
-     * Visit the given URI with a OPTION request.
+     * Visit the given URI with a OPTIONS request.
      *
      * @param  string  $uri
      * @param  array  $data
      * @param  array  $headers
      * @return $this
      */
-    public function option($uri, array $data = [], array $headers = [])
+    public function options($uri, array $data = [], array $headers = [])
     {
         $server = $this->transformHeadersToServerVars($headers);
 
-        $this->call('OPTION', $uri, $data, [], [], $server);
+        $this->call('OPTIONS', $uri, $data, [], [], $server);
 
         return $this;
     }
