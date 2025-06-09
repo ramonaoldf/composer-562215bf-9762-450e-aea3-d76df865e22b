@@ -140,7 +140,7 @@ class Application extends Container
      */
     public function version()
     {
-        return 'Lumen (7.1.3) (Laravel Components ^7.0)';
+        return 'Lumen (7.1.4) (Laravel Components ^7.0)';
     }
 
     /**
@@ -225,9 +225,9 @@ class Application extends Container
             return;
         }
 
-        array_walk($this->loadedProviders, function ($p) {
-            $this->bootProvider($p);
-        });
+        foreach ($this->loadedProviders as $provider) {
+            $this->bootProvider($provider);
+        }
 
         $this->booted = true;
     }
@@ -280,6 +280,10 @@ class Application extends Container
 
         $this->singleton('auth.driver', function () {
             return $this->loadComponent('auth', 'Illuminate\Auth\AuthServiceProvider', 'auth.driver');
+        });
+
+        $this->singleton('Illuminate\Auth\AuthManager', function () {
+            return $this->loadComponent('auth', 'Illuminate\Auth\AuthServiceProvider', 'auth');
         });
 
         $this->singleton('Illuminate\Contracts\Auth\Access\Gate', function () {
