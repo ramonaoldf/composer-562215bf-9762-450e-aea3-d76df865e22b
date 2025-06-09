@@ -164,7 +164,7 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
      */
     public function version()
     {
-        return 'Lumen (5.0.4) (Laravel Components 5.0.*)';
+        return 'Lumen (5.0.5) (Laravel Components 5.0.*)';
     }
 
     /**
@@ -903,6 +903,10 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
         }
 
         if (isset($this->groupAttributes)) {
+            if (isset($this->groupAttributes['prefix'])) {
+                $uri = rtrim('/'.trim($this->groupAttributes['prefix'], '/').$uri, '/');
+            }
+
             $action = $this->mergeGroupAttributes($action);
         }
 
