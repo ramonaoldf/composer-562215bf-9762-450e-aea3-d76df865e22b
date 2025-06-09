@@ -111,7 +111,7 @@ class Application extends Container
      */
     public function version()
     {
-        return 'Lumen (5.3.0) (Laravel Components 5.3.*)';
+        return 'Lumen (5.3.1) (Laravel Components 5.3.*)';
     }
 
     /**
@@ -238,12 +238,12 @@ class Application extends Container
      */
     protected function registerBroadcastingBindings()
     {
+        $this->singleton('Illuminate\Contracts\Broadcasting\Factory', function () {
+            return $this->loadComponent('broadcasting', 'Illuminate\Broadcasting\BroadcastServiceProvider', 'Illuminate\Contracts\Broadcasting\Factory');
+        });
+
         $this->singleton('Illuminate\Contracts\Broadcasting\Broadcaster', function () {
-            $this->configure('broadcasting');
-
-            $this->register('Illuminate\Broadcasting\BroadcastServiceProvider');
-
-            return $this->make('Illuminate\Contracts\Broadcasting\Broadcaster');
+            return $this->loadComponent('broadcasting', 'Illuminate\Broadcasting\BroadcastServiceProvider', 'Illuminate\Contracts\Broadcasting\Broadcaster');
         });
     }
 
@@ -727,6 +727,16 @@ class Application extends Container
     }
 
     /**
+     * Get the path to the resources directory.
+     *
+     * @return string
+     */
+    public function resourcePath()
+    {
+        return $this->basePath().DIRECTORY_SEPARATOR.'resources';
+    }
+
+    /**
      * Determine if the application is running in the console.
      *
      * @return bool
@@ -834,6 +844,7 @@ class Application extends Container
         'Illuminate\Contracts\Auth\Guard' => 'registerAuthBindings',
         'Illuminate\Contracts\Auth\Access\Gate' => 'registerAuthBindings',
         'Illuminate\Contracts\Broadcasting\Broadcaster' => 'registerBroadcastingBindings',
+        'Illuminate\Contracts\Broadcasting\Factory' => 'registerBroadcastingBindings',
         'Illuminate\Contracts\Bus\Dispatcher' => 'registerBusBindings',
         'cache' => 'registerCacheBindings',
         'cache.store' => 'registerCacheBindings',
