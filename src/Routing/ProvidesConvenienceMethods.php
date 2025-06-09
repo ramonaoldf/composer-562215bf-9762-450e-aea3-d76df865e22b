@@ -54,7 +54,7 @@ trait ProvidesConvenienceMethods
      * @param  array  $rules
      * @param  array  $messages
      * @param  array  $customAttributes
-     * @return void
+     * @return array
      */
     public function validate(Request $request, array $rules, array $messages = [], array $customAttributes = [])
     {
@@ -63,6 +63,8 @@ trait ProvidesConvenienceMethods
         if ($validator->fails()) {
             $this->throwValidationException($request, $validator);
         }
+
+        return $validator->getData();
     }
 
     /**
@@ -161,6 +163,18 @@ trait ProvidesConvenienceMethods
     public function dispatch($job)
     {
         return app('Illuminate\Contracts\Bus\Dispatcher')->dispatch($job);
+    }
+
+    /**
+     * Dispatch a command to its appropriate handler in the current process.
+     *
+     * @param  mixed  $job
+     * @param  mixed  $handler
+     * @return mixed
+     */
+    public function dispatchNow($job, $handler = null)
+    {
+        return app('Illuminate\Contracts\Bus\Dispatcher')->dispatchNow($job, $handler);
     }
 
     /**
