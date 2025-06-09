@@ -140,7 +140,7 @@ class Application extends Container
      */
     public function version()
     {
-        return 'Lumen (5.8.10) (Laravel Components 5.8.*)';
+        return 'Lumen (5.8.11) (Laravel Components 5.8.*)';
     }
 
     /**
@@ -813,6 +813,16 @@ class Application extends Container
      * @return bool
      */
     public function routesAreCached()
+    {
+        return false;
+    }
+
+    /**
+     * Determine if the application configuration is cached.
+     *
+     * @return bool
+     */
+    public function configurationIsCached()
     {
         return false;
     }
