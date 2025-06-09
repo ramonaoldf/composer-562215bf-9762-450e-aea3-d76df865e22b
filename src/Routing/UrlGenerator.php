@@ -2,6 +2,8 @@
 
 namespace Laravel\Lumen\Routing;
 
+use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use Laravel\Lumen\Application;
 use Illuminate\Contracts\Routing\UrlRoutable;
 
@@ -92,7 +94,7 @@ class UrlGenerator
 
         $scheme = $this->getSchemeForUrl($secure);
 
-        $extra = $this->formatParametersForUrl($extra);
+        $extra = $this->formatParameters($extra);
 
         $tail = implode('/', array_map(
             'rawurlencode', (array) $extra)
@@ -167,7 +169,7 @@ class UrlGenerator
     {
         $i = 'index.php';
 
-        return str_contains($root, $i) ? str_replace('/'.$i, '', $root) : $root;
+        return Str::contains($root, $i) ? str_replace('/'.$i, '', $root) : $root;
     }
 
     /**
@@ -179,30 +181,6 @@ class UrlGenerator
     public function secureAsset($path)
     {
         return $this->asset($path, true);
-    }
-
-    /**
-     * Get the scheme for a raw URL.
-     *
-     * @param  bool|null  $secure
-     * @return string
-     * @deprecated v5.5.x
-     */
-    protected function getScheme($secure)
-    {
-        return $this->formatScheme($secure);
-    }
-
-    /**
-     * Force the schema for URLs.
-     *
-     * @param  string  $schema
-     * @return void
-     * @deprecated v5.5.x
-     */
-    public function forceSchema($schema)
-    {
-        $this->forceScheme($schema);
     }
 
     /**
@@ -255,7 +233,7 @@ class UrlGenerator
 
         $uri = $this->app->router->namedRoutes[$name];
 
-        $parameters = $this->formatParametersForUrl($parameters);
+        $parameters = $this->formatParameters($parameters);
 
         $uri = preg_replace_callback('/\[([^\]]*)\]$/', function ($matches) use ($uri, &$parameters) {
             $uri = $this->replaceRouteParameters($matches[1], $parameters);
@@ -314,20 +292,9 @@ class UrlGenerator
      * @param  mixed|array  $parameters
      * @return array
      */
-    protected function formatParametersForUrl($parameters)
+    public function formatParameters($parameters)
     {
-        return $this->replaceRoutableParametersForUrl($parameters);
-    }
-
-    /**
-     * Replace UrlRoutable parameters with their route parameter.
-     *
-     * @param  array  $parameters
-     * @return array
-     */
-    protected function replaceRoutableParametersForUrl($parameters = [])
-    {
-        $parameters = is_array($parameters) ? $parameters : [$parameters];
+        $parameters = Arr::wrap($parameters);
 
         foreach ($parameters as $key => $parameter) {
             if ($parameter instanceof UrlRoutable) {
@@ -348,7 +315,7 @@ class UrlGenerator
     protected function replaceRouteParameters($route, &$parameters = [])
     {
         return preg_replace_callback('/\{(.*?)(:.*?)?(\{[0-9,]+\})?\}/', function ($m) use (&$parameters) {
-            return isset($parameters[$m[1]]) ? array_pull($parameters, $m[1]) : $m[0];
+            return isset($parameters[$m[1]]) ? Arr::pull($parameters, $m[1]) : $m[0];
         }, $route);
     }
 
