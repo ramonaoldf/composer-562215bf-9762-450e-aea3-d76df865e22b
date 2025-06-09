@@ -68,7 +68,7 @@ class Kernel implements KernelContract
      */
     protected function setRequestForConsole(Application $app)
     {
-        $uri = $app->make('config')->get('app.url', env('APP_URL', 'http://localhost'));
+        $uri = $app->make('config')->get('app.url', 'http://localhost');
 
         $components = parse_url($uri);
 
@@ -169,7 +169,7 @@ class Kernel implements KernelContract
      * Queue the given console command.
      *
      * @param  string  $command
-     * @param  array   $parameters
+     * @param  array  $parameters
      * @return void
      */
     public function queue($command, array $parameters = [])
