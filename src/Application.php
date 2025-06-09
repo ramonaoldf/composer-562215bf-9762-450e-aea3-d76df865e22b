@@ -20,6 +20,7 @@ use Illuminate\Http\Exception\HttpResponseException;
 use Illuminate\Config\Repository as ConfigRepository;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Illuminate\Contracts\Routing\TerminableMiddleware;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
@@ -171,7 +172,7 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
      */
     public function version()
     {
-        return 'Lumen (5.0.9) (Laravel Components 5.0.*)';
+        return 'Lumen (5.0.10) (Laravel Components 5.0.*)';
     }
 
     /**
@@ -774,6 +775,7 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
             class_alias('Illuminate\Support\Facades\Bus', 'Bus');
             class_alias('Illuminate\Support\Facades\DB', 'DB');
             class_alias('Illuminate\Support\Facades\Cache', 'Cache');
+            class_alias('Illuminate\Support\Facades\Cookie', 'Cookie');
             class_alias('Illuminate\Support\Facades\Crypt', 'Crypt');
             class_alias('Illuminate\Support\Facades\Event', 'Event');
             class_alias('Illuminate\Support\Facades\Hash', 'Hash');
@@ -1086,13 +1088,15 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
         }
 
         try {
-            if (isset($this->routes[$method.$pathInfo])) {
-                return $this->handleFoundRoute([true, $this->routes[$method.$pathInfo]['action'], []]);
-            }
+            return $this->sendThroughPipeline($this->middleware, function () use ($method, $pathInfo) {
+                if (isset($this->routes[$method.$pathInfo])) {
+                    return $this->handleFoundRoute([true, $this->routes[$method.$pathInfo]['action'], []]);
+                }
 
-            return $this->handleDispatcherResponse(
-                $this->createDispatcher()->dispatch($method, $pathInfo)
-            );
+                return $this->handleDispatcherResponse(
+                    $this->createDispatcher()->dispatch($method, $pathInfo)
+                );
+            });
         } catch (Exception $e) {
             return $this->sendExceptionToHandler($e);
         }
@@ -1144,7 +1148,7 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
     }
 
     /**
-     * Handle a route that was found by the dispatcher.
+     * Handle a route found by the dispatcher.
      *
      * @param  array  $routeInfo
      * @return mixed
@@ -1153,24 +1157,6 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
     {
         $this->currentRoute = $routeInfo;
 
-        // Pipe through global middleware...
-        if (count($this->middleware) > 0) {
-            return $this->prepareResponse($this->sendThroughPipeline($this->middleware, function () use ($routeInfo) {
-                return $this->prepareResponse($this->handleArrayBasedFoundRoute($routeInfo));
-            }));
-        }
-
-        return $this->handleArrayBasedFoundRoute($routeInfo);
-    }
-
-    /**
-     * Handle an array based route that was found by the dispatcher.
-     *
-     * @param  array  $routeInfo
-     * @return mixed
-     */
-    protected function handleArrayBasedFoundRoute($routeInfo)
-    {
         $action = $routeInfo[1];
 
         // Pipe through route middleware...
@@ -1178,7 +1164,7 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
             $middleware = $this->gatherMiddlewareClassNames($action['middleware']);
 
             return $this->prepareResponse($this->sendThroughPipeline($middleware, function () use ($routeInfo) {
-                return $this->prepareResponse($this->callActionOnArrayBasedRoute($routeInfo));
+                return $this->callActionOnArrayBasedRoute($routeInfo);
             }));
         }
 
@@ -1324,10 +1310,14 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
      */
     protected function sendThroughPipeline(array $middleware, Closure $then)
     {
-        return (new Pipeline($this))
-            ->send($this->make('request'))
-            ->through($middleware)
-            ->then($then);
+        if (count($middleware) > 0) {
+            return (new Pipeline($this))
+                ->send($this->make('request'))
+                ->through($middleware)
+                ->then($then);
+        }
+
+        return $then();
     }
 
     /**
@@ -1340,6 +1330,8 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
     {
         if (! $response instanceof SymfonyResponse) {
             $response = new Response($response);
+        } elseif ($response instanceof BinaryFileResponse) {
+            $response = $response->prepare(Request::capture());
         }
 
         return $response;
