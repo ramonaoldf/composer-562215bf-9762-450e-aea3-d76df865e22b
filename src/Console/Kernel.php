@@ -111,6 +111,8 @@ class Kernel implements KernelContract
     public function handle($input, $output = null)
     {
         try {
+            $this->app->boot();
+
             return $this->getArtisan()->run($input, $output);
         } catch (Exception $e) {
             $this->reportException($e);
