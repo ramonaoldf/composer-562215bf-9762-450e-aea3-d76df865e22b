@@ -53,7 +53,7 @@ return [
 
         'sqlite' => [
             'driver'   => 'sqlite',
-            'database' => env('DB_DATABASE', database_path('database.sqlite')),
+            'database' => env('DB_DATABASE', base_path('database/database.sqlite')),
             'prefix'   => env('DB_PREFIX', ''),
         ],
 
@@ -89,7 +89,6 @@ return [
             'database' => env('DB_DATABASE', 'forge'),
             'username' => env('DB_USERNAME', 'forge'),
             'password' => env('DB_PASSWORD', ''),
-            'charset'  => 'utf8',
             'prefix'   => env('DB_PREFIX', ''),
         ],
 

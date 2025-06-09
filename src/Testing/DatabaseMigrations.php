@@ -1,11 +1,13 @@
 <?php
 
-namespace Illuminate\Foundation\Testing;
+namespace Laravel\Lumen\Testing;
 
 trait DatabaseMigrations
 {
     /**
-     * @before
+     * Run the dabase migrations for the application.
+     *
+     * @return void
      */
     public function runDatabaseMigrations()
     {
