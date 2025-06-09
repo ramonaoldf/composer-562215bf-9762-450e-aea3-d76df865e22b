@@ -186,7 +186,7 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
      */
     public function version()
     {
-        return 'Lumen (5.1.6) (Laravel Components 5.1.*)';
+        return 'Lumen (5.1.7) (Laravel Components 5.1.*)';
     }
 
     /**
@@ -925,6 +925,10 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
     {
         $parentGroupAttributes = $this->groupAttributes;
 
+        if (isset($attributes['middleware']) && is_string($attributes['middleware'])) {
+            $attributes['middleware'] = explode('|', $attributes['middleware']);
+        }
+
         $this->groupAttributes = $attributes;
 
         call_user_func($callback, $this);
@@ -1058,6 +1062,10 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
             return [$action];
         }
 
+        if (isset($action['middleware']) && is_string($action['middleware'])) {
+            $action['middleware'] = explode('|', $action['middleware']);
+        }
+
         return $action;
     }
 
@@ -1099,7 +1107,7 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
     {
         if (isset($this->groupAttributes['middleware'])) {
             if (isset($action['middleware'])) {
-                $action['middleware'] = $this->groupAttributes['middleware'].'|'.$action['middleware'];
+                $action['middleware'] = array_merge($this->groupAttributes['middleware'], $action['middleware']);
             } else {
                 $action['middleware'] = $this->groupAttributes['middleware'];
             }
@@ -1272,6 +1280,10 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
     protected function handleFoundRoute($routeInfo)
     {
         $this->currentRoute = $routeInfo;
+
+        $this['request']->setRouteResolver(function () {
+            return $this->currentRoute;
+        });
 
         $action = $routeInfo[1];
 
@@ -1774,11 +1786,14 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
                 <link href='//fonts.googleapis.com/css?family=Lato:100' rel='stylesheet' type='text/css'>
 
                 <style>
+                    html, body {
+                        height: 100%;
+                    }
+
                     body {
                         margin: 0;
                         padding: 0;
                         width: 100%;
-                        height: 100%;
                         color: #B0BEC5;
                         display: table;
                         font-weight: 100;
@@ -1798,11 +1813,6 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
 
                     .title {
                         font-size: 96px;
-                        margin-bottom: 40px;
-                    }
-
-                    .quote {
-                        font-size: 24px;
                     }
                 </style>
             </head>
