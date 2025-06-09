@@ -111,7 +111,7 @@ class Application extends Container
      */
     public function version()
     {
-        return 'Lumen (5.2.9) (Laravel Components 5.2.*)';
+        return 'Lumen (5.3.0) (Laravel Components 5.3.*)';
     }
 
     /**
@@ -169,8 +169,13 @@ class Application extends Container
 
         $this->loadedProviders[$providerName] = true;
 
-        $provider->register();
-        $provider->boot();
+        if (method_exists($provider, 'register')) {
+            $provider->register();
+        }
+
+        if (method_exists($provider, 'boot')) {
+            return $this->call([$provider, 'boot']);
+        }
     }
 
     /**
@@ -614,25 +619,48 @@ class Application extends Container
     /**
      * Register the facades for the application.
      *
+     * @param  bool  $aliases
+     * @param  array $userAliases
      * @return void
      */
-    public function withFacades()
+    public function withFacades($aliases = true, $userAliases = [])
     {
         Facade::setFacadeApplication($this);
+
+        if ($aliases) {
+            $this->withAliases($userAliases);
+        }
+    }
+
+    /**
+     * Register the aliases for the application.
+     *
+     * @param  array  $userAliases
+     * @return void
+     */
+    public function withAliases($userAliases = [])
+    {
+        $defaults = [
+            'Illuminate\Support\Facades\Auth' => 'Auth',
+            'Illuminate\Support\Facades\Cache' => 'Cache',
+            'Illuminate\Support\Facades\DB' => 'DB',
+            'Illuminate\Support\Facades\Event' => 'Event',
+            'Illuminate\Support\Facades\Gate' => 'Gate',
+            'Illuminate\Support\Facades\Log' => 'Log',
+            'Illuminate\Support\Facades\Queue' => 'Queue',
+            'Illuminate\Support\Facades\Schema' => 'Schema',
+            'Illuminate\Support\Facades\URL' => 'URL',
+            'Illuminate\Support\Facades\Validator' => 'Validator',
+        ];
 
         if (! static::$aliasesRegistered) {
             static::$aliasesRegistered = true;
 
-            class_alias('Illuminate\Support\Facades\Auth', 'Auth');
-            class_alias('Illuminate\Support\Facades\Cache', 'Cache');
-            class_alias('Illuminate\Support\Facades\DB', 'DB');
-            class_alias('Illuminate\Support\Facades\Event', 'Event');
-            class_alias('Illuminate\Support\Facades\Gate', 'Gate');
-            class_alias('Illuminate\Support\Facades\Log', 'Log');
-            class_alias('Illuminate\Support\Facades\Queue', 'Queue');
-            class_alias('Illuminate\Support\Facades\Schema', 'Schema');
-            class_alias('Illuminate\Support\Facades\URL', 'URL');
-            class_alias('Illuminate\Support\Facades\Validator', 'Validator');
+            $merged = array_merge($defaults, $userAliases);
+
+            foreach ($merged as $original => $alias) {
+                class_alias($original, $alias);
+            }
         }
     }
 
@@ -721,11 +749,12 @@ class Application extends Container
     /**
      * Prepare the application to execute a console command.
      *
+     * @param  bool  $aliases
      * @return void
      */
-    public function prepareForConsoleCommand()
+    public function prepareForConsoleCommand($aliases = true)
     {
-        $this->withFacades();
+        $this->withFacades($aliases);
 
         $this->make('cache');
         $this->make('queue');

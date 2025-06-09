@@ -452,6 +452,18 @@ class FullApplicationTest extends PHPUnit_Framework_TestCase
         $this->assertEquals('Middleware', $response->getContent());
     }
 
+    public function testBasicInvokableActionDispatching()
+    {
+        $app = new Application;
+
+        $app->get('/action/{id}', 'LumenTestAction');
+
+        $response = $app->handle(Request::create('/action/199', 'GET'));
+
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('199', $response->getContent());
+    }
+
     public function testEnvironmentDetection()
     {
         $app = new Application;
@@ -543,6 +555,19 @@ class FullApplicationTest extends PHPUnit_Framework_TestCase
 
         $this->assertInstanceOf('Illuminate\Contracts\Validation\Factory', $validator);
     }
+
+    public function testCanMergeUserProvidedFacadesWithDefaultOnes()
+    {
+        $app = new Application();
+
+        $aliases = [
+            UserFacade::class => 'Foo',
+        ];
+
+        $app->withFacades(true, $aliases);
+
+        $this->assertTrue(class_exists('Foo'));
+    }
 }
 
 class LumenTestService
@@ -607,6 +632,18 @@ class LumenTestParameterizedMiddleware
     {
         return response("Middleware - $parameter1 - $parameter2");
     }
+}
+
+class LumenTestAction
+{
+    public function __invoke($id)
+    {
+        return $id;
+    }
+}
+
+class UserFacade
+{
 }
 
 class LumenTestTerminateMiddleware
