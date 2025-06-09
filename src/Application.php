@@ -129,6 +129,13 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
     protected $ranServiceBinders = [];
 
     /**
+     * The FastRoute dispatcher.
+     *
+     * @var \FastRoute\Dispatcher
+     */
+    protected $dispatcher;
+
+    /**
      * Create a new Lumen application instance.
      *
      * @param  string|null  $basePath
@@ -164,7 +171,7 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
      */
     public function version()
     {
-        return 'Lumen (5.0.8) (Laravel Components 5.0.*)';
+        return 'Lumen (5.0.9) (Laravel Components 5.0.*)';
     }
 
     /**
@@ -768,6 +775,8 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
             class_alias('Illuminate\Support\Facades\DB', 'DB');
             class_alias('Illuminate\Support\Facades\Cache', 'Cache');
             class_alias('Illuminate\Support\Facades\Crypt', 'Crypt');
+            class_alias('Illuminate\Support\Facades\Event', 'Event');
+            class_alias('Illuminate\Support\Facades\Hash', 'Hash');
             class_alias('Illuminate\Support\Facades\Log', 'Log');
             class_alias('Illuminate\Support\Facades\Mail', 'Mail');
             class_alias('Illuminate\Support\Facades\Queue', 'Queue');
@@ -902,16 +911,16 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
 
         $uri = $uri === '/' ? $uri : '/'.trim($uri, '/');
 
-        if (isset($action['as'])) {
-            $this->namedRoutes[$action['as']] = $uri;
-        }
-
         if (isset($this->groupAttributes)) {
             if (isset($this->groupAttributes['prefix'])) {
                 $uri = rtrim('/'.trim($this->groupAttributes['prefix'], '/').$uri, '/');
             }
 
             $action = $this->mergeGroupAttributes($action);
+        }
+
+        if (isset($action['as'])) {
+            $this->namedRoutes[$action['as']] = $uri;
         }
 
         $this->routes[$method.$uri] = ['method' => $method, 'uri' => $uri, 'action' => $action];
@@ -1096,11 +1105,22 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
      */
     protected function createDispatcher()
     {
-        return \FastRoute\simpleDispatcher(function ($r) {
+        return $this->dispatcher ?: \FastRoute\simpleDispatcher(function ($r) {
             foreach ($this->routes as $route) {
                 $r->addRoute($route['method'], $route['uri'], $route['action']);
             }
         });
+    }
+
+    /**
+     * Set the FastRoute dispatcher instance.
+     *
+     * @param  \FastRoute\Dispatcher  $dispatcher
+     * @return void
+     */
+    public function setDispatcher(Dispatcher $dispatcher)
+    {
+        $this->dispatcher = $dispatcher;
     }
 
     /**
@@ -1188,7 +1208,7 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
         }
 
         try {
-            return $this->call($closure, array_values($routeInfo[2]));
+            return $this->call($closure, $routeInfo[2]);
         } catch (HttpResponseException $e) {
             return $e->getResponse();
         }
@@ -1212,7 +1232,7 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
             return $this->callLumenController($instance, $method, $routeInfo);
         } else {
             return $this->callControllerCallable(
-                [$instance, $method], array_values($routeInfo[2])
+                [$instance, $method], $routeInfo[2]
             );
         }
     }
@@ -1237,7 +1257,7 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
             );
         } else {
             return $this->callControllerCallable(
-                [$instance, $method], array_values($routeInfo[2])
+                [$instance, $method], $routeInfo[2]
             );
         }
     }
@@ -1257,7 +1277,7 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
 
         return $this->sendThroughPipeline($middleware, function () use ($instance, $method, $routeInfo) {
             return $this->callControllerCallable(
-                [$instance, $method], array_values($routeInfo[2])
+                [$instance, $method], $routeInfo[2]
             );
         });
     }
@@ -1348,7 +1368,7 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
     {
         $query = isset($_SERVER['QUERY_STRING']) ? $_SERVER['QUERY_STRING'] : '';
 
-        return '/'.ltrim(str_replace('?'.$query, '', $_SERVER['REQUEST_URI']), '/');
+        return '/'.trim(str_replace('?'.$query, '', $_SERVER['REQUEST_URI']), '/');
     }
 
     /**
