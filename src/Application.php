@@ -162,7 +162,7 @@ class Application extends Container
      */
     public function version()
     {
-        return 'Lumen (9.1.2) (Laravel Components ^9.21)';
+        return 'Lumen (9.1.3) (Laravel Components ^9.21)';
     }
 
     /**
@@ -987,6 +987,16 @@ class Application extends Container
     public function getLocale()
     {
         return $this['config']->get('app.locale');
+    }
+
+    /**
+     * Get the current application fallback locale.
+     *
+     * @return string
+     */
+    public function getFallbackLocale()
+    {
+        return $this['config']->get('app.fallback_locale');
     }
 
     /**
