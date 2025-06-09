@@ -1,11 +1,12 @@
-<?php namespace Laravel\Lumen\Routing;
+<?php
+
+namespace Laravel\Lumen\Routing;
 
 use Laravel\Lumen\Application;
 use Illuminate\Contracts\Routing\UrlRoutable;
 
 class UrlGenerator
 {
-
     /**
      * The application instance.
      *
@@ -66,7 +67,7 @@ class UrlGenerator
     }
 
     /**
-     * Generate a url for the application
+     * Generate a url for the application.
      *
      * @param  string  $path
      * @param  array  $extra
@@ -197,10 +198,10 @@ class UrlGenerator
         }
 
         $uri = $this->app->namedRoutes[$name];
-        
+
         $parameters = $this->formatParametersForUrl($parameters);
 
-        $uri = preg_replace_callback('/\{(.*?)(:.*?)?\}/', function ($m) use (&$parameters) {
+        $uri = preg_replace_callback('/\{(.*?)(:.*?)?(\{[0-9,]+\})?\}/', function ($m) use (&$parameters) {
             return isset($parameters[$m[1]]) ? array_pull($parameters, $m[1]) : $m[0];
         }, $uri);
 
@@ -266,7 +267,7 @@ class UrlGenerator
      */
     protected function replaceRoutableParametersForUrl($parameters = [])
     {
-        $parameters = is_array($parameters) ? $parameters : array($parameters);
+        $parameters = is_array($parameters) ? $parameters : [$parameters];
 
         foreach ($parameters as $key => $parameter) {
             if ($parameter instanceof UrlRoutable) {
