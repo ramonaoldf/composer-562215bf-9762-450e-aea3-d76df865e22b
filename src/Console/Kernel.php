@@ -1,15 +1,18 @@
-<?php namespace Laravel\Lumen\Console;
+<?php
+
+namespace Laravel\Lumen\Console;
 
 use Exception;
+use Throwable;
 use RuntimeException;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Console\Application as Artisan;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Console\Kernel as KernelContract;
+use Symfony\Component\Debug\Exception\FatalThrowableError;
 
 class Kernel implements KernelContract
 {
-
     /**
      * The application implementation.
      *
@@ -79,6 +82,14 @@ class Kernel implements KernelContract
             $this->renderException($output, $e);
 
             return 1;
+        } catch (Throwable $e) {
+            $e = new FatalThrowableError($e);
+
+            $this->reportException($e);
+
+            $this->renderException($output, $e);
+
+            return 1;
         }
     }
 
@@ -114,7 +125,7 @@ class Kernel implements KernelContract
      */
     public function queue($command, array $parameters = [])
     {
-        throw new RuntimeException("Queueing Artisan commands is not supported by Lumen.");
+        throw new RuntimeException('Queueing Artisan commands is not supported by Lumen.');
     }
 
     /**

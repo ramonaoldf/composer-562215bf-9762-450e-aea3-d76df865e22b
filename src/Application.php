@@ -1,7 +1,11 @@
-<?php namespace Laravel\Lumen;
+<?php
 
+namespace Laravel\Lumen;
+
+use Error;
 use Closure;
 use Exception;
+use Throwable;
 use ErrorException;
 use Monolog\Logger;
 use RuntimeException;
@@ -23,6 +27,7 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Debug\Exception\FatalErrorException;
+use Symfony\Component\Debug\Exception\FatalThrowableError;
 use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -31,7 +36,6 @@ use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 
 class Application extends Container implements ApplicationContract, HttpKernelInterface
 {
-
     /**
      * Indicates if the class aliases have been registered.
      *
@@ -169,6 +173,7 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
         static::setInstance($this);
 
         $this->instance('app', $this);
+        $this->instance('path', $this->path());
 
         $this->registerContainerAliases();
     }
@@ -180,7 +185,7 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
      */
     public function version()
     {
-        return 'Lumen (5.1.3) (Laravel Components 5.1.*)';
+        return 'Lumen (5.1.4) (Laravel Components 5.1.*)';
     }
 
     /**
@@ -244,7 +249,7 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
      */
     public function register($provider, $options = [], $force = false)
     {
-        if (!$provider instanceof ServiceProvider) {
+        if (! $provider instanceof ServiceProvider) {
             $provider = new $provider($this);
         }
 
@@ -338,18 +343,28 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
      */
     protected function isFatalError($type)
     {
-        return in_array($type, [E_ERROR, E_CORE_ERROR, E_COMPILE_ERROR, E_PARSE]);
+        $errorCodes = [E_ERROR, E_CORE_ERROR, E_COMPILE_ERROR, E_PARSE];
+
+        if (defined('FATAL_ERROR')) {
+            $errorCodes[] = FATAL_ERROR;
+        }
+
+        return in_array($type, $errorCodes);
     }
 
     /**
      * Send the exception to the handler and return the response.
      *
-     * @param  Exception  $e
+     * @param  \Throwable  $e
      * @return Response
      */
     protected function sendExceptionToHandler($e)
     {
         $handler = $this->make('Illuminate\Contracts\Debug\ExceptionHandler');
+
+        if ($e instanceof Error) {
+            $e = new FatalThrowableError($e);
+        }
 
         $handler->report($e);
 
@@ -359,12 +374,16 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
     /**
      * Handle an uncaught exception instance.
      *
-     * @param  Exception  $e
+     * @param  \Throwable  $e
      * @return void
      */
     protected function handleUncaughtException($e)
     {
         $handler = $this->make('Illuminate\Contracts\Debug\ExceptionHandler');
+
+        if ($e instanceof Error) {
+            $e = new FatalThrowableError($e);
+        }
 
         $handler->report($e);
 
@@ -526,7 +545,7 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
             return $this->loadComponent(
                 'database', [
                     'Illuminate\Database\DatabaseServiceProvider',
-                    'Illuminate\Pagination\PaginationServiceProvider'],
+                    'Illuminate\Pagination\PaginationServiceProvider', ],
                 'db'
             );
         });
@@ -876,11 +895,13 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
      */
     public function group(array $attributes, Closure $callback)
     {
+        $parentGroupAttributes = $this->groupAttributes;
+
         $this->groupAttributes = $attributes;
 
         call_user_func($callback, $this);
 
-        $this->groupAttributes = null;
+        $this->groupAttributes = $parentGroupAttributes;
     }
 
     /**
@@ -1164,6 +1185,8 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
             });
         } catch (Exception $e) {
             return $this->sendExceptionToHandler($e);
+        } catch (Throwable $e) {
+            return $this->sendExceptionToHandler($e);
         }
     }
 
@@ -1364,6 +1387,7 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
 
         return array_map(function ($name) {
             list($name, $parameters) = array_pad(explode(':', $name, 2), 2, null);
+
             return array_get($this->routeMiddleware, $name, $name).($parameters ? ':'.$parameters : '');
         }, $middleware);
     }
@@ -1442,7 +1466,7 @@ class Application extends Container implements ApplicationContract, HttpKernelIn
      */
     public function getNamespace()
     {
-        if (!is_null($this->namespace)) {
+        if (! is_null($this->namespace)) {
             return $this->namespace;
         }
 
