@@ -25,6 +25,25 @@ class FullApplicationTest extends PHPUnit_Framework_TestCase
         $this->assertEquals('Hello World', $response->getContent());
     }
 
+    public function testAddRouteMultipleMethodRequest()
+    {
+        $app = new Application;
+
+        $app->addRoute(['GET', 'POST'], '/', function () {
+            return response('Hello World');
+        });
+
+        $response = $app->handle(Request::create('/', 'GET'));
+
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('Hello World', $response->getContent());
+
+        $response = $app->handle(Request::create('/', 'POST'));
+
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('Hello World', $response->getContent());
+    }
+
     public function testRequestWithoutSymfonyClass()
     {
         $app = new Application;
@@ -81,7 +100,7 @@ class FullApplicationTest extends PHPUnit_Framework_TestCase
     {
         $app = new Application;
         $app->get('/foo-bar/{baz}', function ($baz = 'default-value') {
-          return response($baz);
+            return response($baz);
         });
 
         $response = $app->handle(Request::create('/foo-bar/something', 'GET'));
@@ -409,6 +428,13 @@ class FullApplicationTest extends PHPUnit_Framework_TestCase
         $this->assertTrue($app->environment(['production']));
     }
 
+    public function testRunningUnitTestsDetection()
+    {
+        $app = new Application;
+
+        $this->assertEquals(false, $app->runningUnitTests());
+    }
+
     public function testValidationHelpers()
     {
         $app = new Application;
@@ -467,6 +493,15 @@ class FullApplicationTest extends PHPUnit_Framework_TestCase
         $response = $app->handle(Request::create('/', 'GET'));
 
         $this->assertSame('1234', $response->getContent());
+    }
+
+    public function testCanResolveValidationFactoryFromContract()
+    {
+        $app = new Application();
+
+        $validator = $app['Illuminate\Contracts\Validation\Factory'];
+
+        $this->assertInstanceOf('Illuminate\Contracts\Validation\Factory', $validator);
     }
 }
 
