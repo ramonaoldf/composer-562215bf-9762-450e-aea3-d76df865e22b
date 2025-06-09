@@ -15,6 +15,8 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Laravel\Lumen\Routing\Controller as LumenController;
 use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
+use Psr\Http\Message\ResponseInterface as PsrResponseInterface;
+use Symfony\Bridge\PsrHttpMessage\Factory\HttpFoundationFactory;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
@@ -80,6 +82,10 @@ trait RoutesRequests
     public function group(array $attributes, Closure $callback)
     {
         $parentGroupAttributes = $this->groupAttributes;
+
+        if (isset($attributes['middleware']) && is_string($attributes['middleware'])) {
+            $attributes['middleware'] = explode('|', $attributes['middleware']);
+        }
 
         $this->groupAttributes = $attributes;
 
@@ -214,6 +220,10 @@ trait RoutesRequests
             return [$action];
         }
 
+        if (isset($action['middleware']) && is_string($action['middleware'])) {
+            $action['middleware'] = explode('|', $action['middleware']);
+        }
+
         return $action;
     }
 
@@ -255,7 +265,7 @@ trait RoutesRequests
     {
         if (isset($this->groupAttributes['middleware'])) {
             if (isset($action['middleware'])) {
-                $action['middleware'] = $this->groupAttributes['middleware'].'|'.$action['middleware'];
+                $action['middleware'] = array_merge($this->groupAttributes['middleware'], $action['middleware']);
             } else {
                 $action['middleware'] = $this->groupAttributes['middleware'];
             }
@@ -618,7 +628,9 @@ trait RoutesRequests
      */
     public function prepareResponse($response)
     {
-        if (! $response instanceof SymfonyResponse) {
+        if ($response instanceof PsrResponseInterface) {
+            $response = (new HttpFoundationFactory)->createResponse($response);
+        } elseif (! $response instanceof SymfonyResponse) {
             $response = new Response($response);
         } elseif ($response instanceof BinaryFileResponse) {
             $response = $response->prepare(Request::capture());
