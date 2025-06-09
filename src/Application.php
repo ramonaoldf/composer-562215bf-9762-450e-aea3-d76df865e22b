@@ -108,7 +108,7 @@ class Application extends Container
      */
     public function version()
     {
-        return 'Lumen (5.2.2) (Laravel Components 5.2.*)';
+        return 'Lumen (5.2.3) (Laravel Components 5.2.*)';
     }
 
     /**
@@ -457,8 +457,8 @@ class Application extends Container
      */
     protected function getLanguagePath()
     {
-        if (is_dir($appPath = $this->path().'/resources/lang')) {
-            return $appPath;
+        if (is_dir($langPath = $this->basePath().'/resources/lang')) {
+            return $langPath;
         } else {
             return __DIR__.'/../resources/lang';
         }
@@ -714,6 +714,7 @@ class Application extends Container
         'Illuminate\Contracts\Broadcasting\Broadcaster' => 'registerBroadcastingBindings',
         'Illuminate\Contracts\Bus\Dispatcher' => 'registerBusBindings',
         'cache' => 'registerCacheBindings',
+        'cache.store' => 'registerCacheBindings',
         'Illuminate\Contracts\Cache\Factory' => 'registerCacheBindings',
         'Illuminate\Contracts\Cache\Repository' => 'registerCacheBindings',
         'composer' => 'registerComposerBindings',
