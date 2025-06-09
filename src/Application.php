@@ -162,7 +162,7 @@ class Application extends Container
      */
     public function version()
     {
-        return 'Lumen (8.3.4) (Laravel Components ^8.0)';
+        return 'Lumen (9.0.0) (Laravel Components ^9.0)';
     }
 
     /**
@@ -791,10 +791,10 @@ class Application extends Container
     /**
      * Get the base path for the application.
      *
-     * @param  string|null  $path
+     * @param  string  $path
      * @return string
      */
-    public function basePath($path = null)
+    public function basePath($path = '')
     {
         if (isset($this->basePath)) {
             return $this->basePath.($path ? '/'.$path : $path);
