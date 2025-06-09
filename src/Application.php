@@ -111,7 +111,7 @@ class Application extends Container
      */
     public function version()
     {
-        return 'Lumen (5.3.1) (Laravel Components 5.3.*)';
+        return 'Lumen (5.3.2) (Laravel Components 5.3.*)';
     }
 
     /**
@@ -444,8 +444,8 @@ class Application extends Container
      */
     protected function prepareRequest(Request $request)
     {
-        $request->setUserResolver(function () {
-            return $this->make('auth')->user();
+        $request->setUserResolver(function ($guard = null) {
+            return $this->make('auth')->guard($guard)->user();
         })->setRouteResolver(function () {
             return $this->currentRoute;
         });
