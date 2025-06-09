@@ -107,7 +107,7 @@ class Application extends Container
         static::setInstance($this);
 
         $this->instance('app', $this);
-        $this->instance('Laravel\Lumen\Application', $this);
+        $this->instance(static::class, $this);
 
         $this->instance('path', $this->path());
 
@@ -133,7 +133,7 @@ class Application extends Container
      */
     public function version()
     {
-        return 'Lumen (5.7.4) (Laravel Components 5.7.*)';
+        return 'Lumen (5.7.5) (Laravel Components 5.7.*)';
     }
 
     /**
