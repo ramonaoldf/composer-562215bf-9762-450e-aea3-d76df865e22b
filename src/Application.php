@@ -133,7 +133,7 @@ class Application extends Container
      */
     public function version()
     {
-        return 'Lumen (5.5.0) (Laravel Components 5.5.*)';
+        return 'Lumen (5.5.1) (Laravel Components 5.5.*)';
     }
 
     /**
@@ -433,6 +433,18 @@ class Application extends Container
     }
 
     /**
+     * Register container bindings for the application.
+     *
+     * @return void
+     */
+    protected function registerRouterBindings()
+    {
+        $this->singleton('router', function () {
+            return $this->router;
+        });
+    }
+
+    /**
      * Get the Monolog handler for the application.
      *
      * @return \Monolog\Handler\AbstractHandler
@@ -659,6 +671,7 @@ class Application extends Container
             'Illuminate\Support\Facades\Gate' => 'Gate',
             'Illuminate\Support\Facades\Log' => 'Log',
             'Illuminate\Support\Facades\Queue' => 'Queue',
+            'Illuminate\Support\Facades\Route' => 'Route',
             'Illuminate\Support\Facades\Schema' => 'Schema',
             'Illuminate\Support\Facades\URL' => 'URL',
             'Illuminate\Support\Facades\Validator' => 'Validator',
@@ -839,6 +852,7 @@ class Application extends Container
             'Illuminate\Contracts\Queue\Factory' => 'queue',
             'Illuminate\Contracts\Queue\Queue' => 'queue.connection',
             'request' => 'Illuminate\Http\Request',
+            'Laravel\Lumen\Routing\Router' => 'router',
             'Laravel\Lumen\Routing\UrlGenerator' => 'url',
             'Illuminate\Contracts\Validation\Factory' => 'validator',
             'Illuminate\Contracts\View\Factory' => 'view',
@@ -880,6 +894,7 @@ class Application extends Container
         'queue.connection' => 'registerQueueBindings',
         'Illuminate\Contracts\Queue\Factory' => 'registerQueueBindings',
         'Illuminate\Contracts\Queue\Queue' => 'registerQueueBindings',
+        'router' => 'registerRouterBindings',
         'Psr\Http\Message\ServerRequestInterface' => 'registerPsrRequestBindings',
         'Psr\Http\Message\ResponseInterface' => 'registerPsrResponseBindings',
         'translator' => 'registerTranslationBindings',
